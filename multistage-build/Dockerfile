@@ -4,17 +4,23 @@ FROM node:${NODE_VERSION}-alpine AS build
 
 WORKDIR /usr/src/app
 
-RUN --mount=type=bind,source=package.json,target=package.json \
---mount=type=bind,source=package-lock.json,target=package-lock.json \
---mount=type=cache,target=/root/.npm \
-npm ci --omit=dev
+COPY package*.json .
+
+RUN npm ci
+
+COPY src src
+
+COPY tsconfig.json .
+
+RUN npm run build
 
 FROM gcr.io/distroless/nodejs22
 
 WORKDIR /usr/src/app
 
 COPY --from=build /usr/src/app/node_modules node_modules
+COPY --from=build /usr/src/app/dist dist
 
-COPY src src
+ENV PORT=3000
 
-CMD ["src/index.js"]
+CMD ["dist/index.js"]
