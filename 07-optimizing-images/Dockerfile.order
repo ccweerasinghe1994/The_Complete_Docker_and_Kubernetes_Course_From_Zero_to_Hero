@@ -1,0 +1,26 @@
+# 1. ARG - defines build-time variables
+ARG NODE_VERSION=22
+
+# 2. FROM - base image (uses ARG), rarely changes
+FROM node:${NODE_VERSION}-alpine
+
+# 3. WORKDIR - sets working directory, rarely changes
+WORKDIR /usr/src/app
+
+# 4. Dependencies first - package.json changes less frequently than source code
+COPY package*.json .
+RUN npm ci
+
+# 5. Source code last - changes most frequently
+COPY index.js .
+
+# 6. CMD - runtime command, rarely changes
+CMD ["node", "index.js"]
+
+# Example of poor ordering (don't do this):
+# FROM node:alpine
+# WORKDIR /app
+# COPY . .           <- Copies everything, breaking cache for any file change
+# RUN npm ci
+# CMD ["node", "index.js"]
+
