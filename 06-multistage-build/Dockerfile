@@ -14,11 +14,20 @@ COPY tsconfig.json .
 
 RUN npm run build
 
+
+FROM node:${NODE_VERSION}-alpine AS deps
+
+WORKDIR /usr/src/app
+
+COPY package*.json .
+
+RUN npm ci --only=production
+
 FROM gcr.io/distroless/nodejs22
 
 WORKDIR /usr/src/app
 
-COPY --from=build /usr/src/app/node_modules node_modules
+COPY --from=deps /usr/src/app/node_modules node_modules
 COPY --from=build /usr/src/app/dist dist
 
 ENV PORT=3000
